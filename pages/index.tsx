@@ -1,62 +1,54 @@
-import Head from 'next/head'
+import Head from "next/head";
+import { useState, useRef } from "react";
+import useSWR from "swr";
+import { getImages, getMediumImageSrc } from "../api/imgur";
+import Lightbox from "react-image-lightbox";
+import { useImages } from "../hooks/useImages";
+import { useSearch } from "../hooks/useSearch";
 
 export default function Home() {
+  const inputRef = useRef(null);
+  const [searchVal, setSearchVal] = useState<string | null>(null);
+  const { images, loading, error } = useSearch({ query: searchVal });
+  const { lightboxProps, selectImage } = useImages(images);
+
   return (
     <div className="container">
-      <Head>
-        <title>Create Next App</title>
+      <Head key="header">
+        <title>Search for your cool images!</title>
         <link rel="icon" href="/favicon.ico" />
+        <link rel="stylesheet" href="/lightbox.css" />
       </Head>
 
+      {lightboxProps && <Lightbox {...lightboxProps} />}
       <main>
-        <h1 className="title">
-          Welcome to <a href="https://nextjs.org">Next.js!</a>
-        </h1>
+        <h1 className="title">Search for an image!</h1>
 
         <p className="description">
-          Get started by editing <code>pages/index.js</code>
+          <input ref={inputRef} />
+          <button onClick={() => setSearchVal(inputRef.current.value)}>
+            Search
+          </button>
         </p>
-
-        <div className="grid">
-          <a href="https://nextjs.org/docs" className="card">
-            <h3>Documentation &rarr;</h3>
-            <p>Find in-depth information about Next.js features and API.</p>
-          </a>
-
-          <a href="https://nextjs.org/learn" className="card">
-            <h3>Learn &rarr;</h3>
-            <p>Learn about Next.js in an interactive course with quizzes!</p>
-          </a>
-
-          <a
-            href="https://github.com/vercel/next.js/tree/master/examples"
-            className="card"
-          >
-            <h3>Examples &rarr;</h3>
-            <p>Discover and deploy boilerplate example Next.js projects.</p>
-          </a>
-
-          <a
-            href="https://vercel.com/import?filter=next.js&utm_source=create-next-app&utm_medium=default-template&utm_campaign=create-next-app"
-            className="card"
-          >
-            <h3>Deploy &rarr;</h3>
-            <p>
-              Instantly deploy your Next.js site to a public URL with Vercel.
-            </p>
-          </a>
-        </div>
+        {loading && <img src="/spinner.svg" />}
+        {images && (
+          <div className="grid">
+            {images.map((image, index) => (
+              <div className="card" onClick={() => selectImage(index)}>
+                <img src={getMediumImageSrc(image)} alt={image.title} />
+              </div>
+            ))}
+          </div>
+        )}
+        {error && <p>Oh noes!</p>}
+        {}
       </main>
 
       <footer>
-        <a
-          href="https://vercel.com?utm_source=create-next-app&utm_medium=default-template&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Powered by{' '}
+        <div>
+          Powered by{" "}
           <img src="/vercel.svg" alt="Vercel Logo" className="logo" />
-        </a>
+        </div>
       </footer>
 
       <style jsx>{`
@@ -73,6 +65,7 @@ export default function Home() {
           padding: 5rem 0;
           flex: 1;
           display: flex;
+          min-width: 75%;
           flex-direction: column;
           justify-content: center;
           align-items: center;
@@ -129,35 +122,35 @@ export default function Home() {
           font-size: 1.5rem;
         }
 
-        code {
-          background: #fafafa;
-          border-radius: 5px;
-          padding: 0.75rem;
-          font-size: 1.1rem;
-          font-family: Menlo, Monaco, Lucida Console, Liberation Mono,
-            DejaVu Sans Mono, Bitstream Vera Sans Mono, Courier New, monospace;
-        }
-
         .grid {
           display: flex;
           align-items: center;
           justify-content: center;
           flex-wrap: wrap;
-
-          max-width: 800px;
+          max-width: 80%;
           margin-top: 3rem;
         }
 
         .card {
-          margin: 1rem;
-          flex-basis: 45%;
-          padding: 1.5rem;
+          flex-basis: 100%;
+          margin: 0.5rem;
+          padding: 0.5rem;
           text-align: left;
           color: inherit;
+          max-width: 19%;
+          height: 360px;
+          overflow: hidden;
+          display: flex;
+          justify-content: space-around;
           text-decoration: none;
           border: 1px solid #eaeaea;
           border-radius: 10px;
           transition: color 0.15s ease, border-color 0.15s ease;
+        }
+
+        .card img {
+          position: relative;
+          margin: auto;
         }
 
         .card:hover,
@@ -165,17 +158,6 @@ export default function Home() {
         .card:active {
           color: #0070f3;
           border-color: #0070f3;
-        }
-
-        .card h3 {
-          margin: 0 0 1rem 0;
-          font-size: 1.5rem;
-        }
-
-        .card p {
-          margin: 0;
-          font-size: 1.25rem;
-          line-height: 1.5;
         }
 
         .logo {
@@ -186,6 +168,10 @@ export default function Home() {
           .grid {
             width: 100%;
             flex-direction: column;
+          }
+          .card {
+            width: 100%;
+            max-width: 100%;
           }
         }
       `}</style>
@@ -205,5 +191,5 @@ export default function Home() {
         }
       `}</style>
     </div>
-  )
+  );
 }
